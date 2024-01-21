@@ -1,7 +1,8 @@
 import bcrypt from "bcrypt";
 import db from "../db.js";
+import { errorHandler } from "../utils/error.js";
 
-export const signup = async (req, res) => {
+export const signup = async (req, res, next) => {
   const { username, email, password } = req.body;
 
   if (
@@ -12,7 +13,7 @@ export const signup = async (req, res) => {
     email === "" ||
     password === ""
   ) {
-    return res.status(400).json({ message: "All fields are required" });
+    next(errorHandler(400, "All fields are required"));
   }
 
   const newUser = {
@@ -27,10 +28,10 @@ export const signup = async (req, res) => {
 
     db.query(sql, [username, email], (err, data) => {
       if (err) {
-        res.status(500).json({ message: "Internal server error" });
+        next(errorHandler(500, "Internal server error"));
       }
       if (data.length)
-        return res.status(409).json({ message: "User already exists!" });
+        next(errorHandler(400, "Username or email already exists"));
 
       // Hash the password
       const hashedPassword = bcrypt.hash(newUser.password, 10);
@@ -41,7 +42,7 @@ export const signup = async (req, res) => {
 
       db.query(sql, newUser, (err, data) => {
         if (err) {
-          res.status(500).json({ message: "Internal server error" });
+          next(errorHandler(500, "Internal server error"));
         }
         res.status(201).json({ message: "User created successfully" });
       });
