@@ -113,8 +113,8 @@ export const google = async (req, res, next) => {
 
   try {
     const getUserSql = "SELECT * FROM users WHERE email = ?";
-    db.query(getUserSql, [email], async (getUserErr, userData) => {
-      if (getUserErr) {
+    db.query(getUserSql, [email], async (err, userData) => {
+      if (err) {
         return next(errorHandler(500, "Error checking existing user"));
       }
 
@@ -133,8 +133,8 @@ export const google = async (req, res, next) => {
         };
 
         const insertUserSql = "INSERT INTO users SET ?";
-        db.query(insertUserSql, newUser, (insertUserErr, insertUserData) => {
-          if (insertUserErr) {
+        db.query(insertUserSql, newUser, (err, insertUserData) => {
+          if (err) {
             return next(errorHandler(500, "Error inserting new user"));
           }
 
@@ -161,10 +161,29 @@ export const google = async (req, res, next) => {
             .json(newUser);
         });
       } else {
-        // User already exists
+        // User already exists, send the data in the response
+        const user = userData[0];
+        delete user.password;
+        user.success = true;
+
+        const token = jwt.sign(
+          {
+            id: userData.insertId,
+            username: userData.username,
+            email: userData.email,
+          },
+          process.env.JWT_SECRET,
+          {
+            expiresIn: "1d",
+          }
+        );
+
         return res
           .status(200)
-          .json({ success: true, message: "User already exists" });
+          .cookie("access_token", token, {
+            httpOnly: true,
+          })
+          .json(user);
       }
     });
   } catch (error) {
