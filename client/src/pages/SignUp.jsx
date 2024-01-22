@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Button, Label, TextInput } from "flowbite-react";
-import { Link } from "react-router-dom";
+import { Button, Label, Spinner, TextInput } from "flowbite-react";
+import { Link, useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({});
-  // const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value.trim() });
@@ -19,6 +20,7 @@ export default function SignUp() {
     }
 
     try {
+      setLoading(true);
       const res = await fetch("/api/auth/sign-up", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -26,10 +28,14 @@ export default function SignUp() {
       });
       const data = await res.json();
 
-      if (!data.success) {
+      if (data.success === false) {
         toast.error(data.message);
       } else {
         toast.success(data.message);
+        if (res.ok) {
+          navigate("/sign-in");
+        }
+        loading && setLoading(false);
       }
     } catch (error) {
       if (
@@ -93,8 +99,19 @@ export default function SignUp() {
                 onChange={handleChange}
               />
             </div>
-            <Button gradientDuoTone="purpleToPink" type="submit">
-              Sign Up
+            <Button
+              gradientDuoTone="purpleToPink"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Spinner size="sm" />
+                  <span className="pl-3">Loading...</span>
+                </>
+              ) : (
+                "Sign Up"
+              )}
             </Button>
           </form>
           <div className="flex gap-2 text-sm mt-5">
