@@ -30,14 +30,14 @@ export default function SignUp() {
 
       if (data.success === false) {
         toast.error(data.message);
-      } else {
-        toast.success(data.message);
+      } else if (data.success === true) {
+        loading && setLoading(false);
         if (res.ok) {
           navigate("/sign-in");
         }
-        loading && setLoading(false);
       }
     } catch (error) {
+      setLoading(false);
       if (
         error.response &&
         error.response.data &&
