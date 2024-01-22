@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Alert, Button, Label, TextInput } from "flowbite-react";
+import { Button, Label, TextInput } from "flowbite-react";
 import { Link } from "react-router-dom";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({});
-  const [errorMessage, setErrorMessage] = useState("");
   // const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
@@ -13,21 +13,36 @@ export default function SignUp() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!formData.username || !formData.email || !formData.password) {
-      return setErrorMessage("Please fill all the fields");
+      return toast.error("Please fill all the fields");
     }
+
     try {
       const res = await fetch("/api/auth/sign-up", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-      if (data.success == false) {
-        return setErrorMessage(data.message);
-      }
       const data = await res.json();
+
+      if (!data.success) {
+        toast.error(data.message);
+      } else {
+        toast.success(data.message);
+      }
     } catch (error) {
-      //
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        toast.error(`Server error: ${error.response.data.message}`);
+      } else if (error.request) {
+        toast.error("No response from server");
+      } else {
+        toast.error("Something went wrong");
+      }
     }
   };
 
@@ -88,13 +103,9 @@ export default function SignUp() {
               Sign In
             </Link>
           </div>
-          {errorMessage && (
-            <Alert className="mt-5" color="failure">
-              {errorMessage}
-            </Alert>
-          )}
         </div>
       </div>
+      <Toaster />
     </div>
   );
 }
