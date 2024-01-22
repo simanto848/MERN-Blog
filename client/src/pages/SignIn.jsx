@@ -1,10 +1,19 @@
 import { useState } from "react";
-import { Button, Label, TextInput } from "flowbite-react";
+import { Alert, Button, Label, Spinner, TextInput } from "flowbite-react";
 import { Link, useNavigate } from "react-router-dom";
-import toast, { Toaster } from "react-hot-toast";
+// import toast, { Toaster } from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  singInStart,
+  signInSuccess,
+  signInFailure,
+} from "../redux/user/userSlice";
 
 export default function SignIn() {
   const [formData, setFormData] = useState({});
+  // const [loading, setLoading] = useState(false);
+  const { loading, error: errorMessage } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -15,10 +24,13 @@ export default function SignIn() {
     e.preventDefault();
 
     if (!formData.email || !formData.password) {
-      return toast.error("Please fill all the fields");
+      // return toast.error("Please fill all the fields");
+      return dispatch(signInFailure("Please fill all the fields"));
     }
 
     try {
+      // setLoading(true);
+      dispatch(singInStart());
       const res = await fetch("/api/auth/sign-in", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -27,25 +39,27 @@ export default function SignIn() {
       const data = await res.json();
 
       if (data.success === false) {
-        toast.error(data.message);
+        // toast.error(data.message);
+        dispatch(signInFailure(data.message));
       } else if (data.success === true) {
-        toast.success(data.message);
         if (res.ok) {
+          dispatch(signInSuccess(data));
           navigate("/");
         }
       }
     } catch (error) {
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        toast.error(`Server error: ${error.response.data.message}`);
-      } else if (error.request) {
-        toast.error("No response from server");
-      } else {
-        toast.error("Something went wrong");
-      }
+      // if (
+      //   error.response &&
+      //   error.response.data &&
+      //   error.response.data.message
+      // ) {
+      //   toast.error(`Server error: ${error.response.data.message}`);
+      // } else if (error.request) {
+      //   toast.error("No response from server");
+      // } else {
+      //   toast.error("Something went wrong");
+      // }
+      dispatch(signInFailure(error.message));
     }
   };
 
@@ -87,8 +101,19 @@ export default function SignIn() {
                 onChange={handleChange}
               />
             </div>
-            <Button gradientDuoTone="purpleToPink" type="submit">
-              Sign In
+            <Button
+              gradientDuoTone="purpleToPink"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Spinner size="sm" />
+                  <span className="pl-3">Loading...</span>
+                </>
+              ) : (
+                "Sign In"
+              )}
             </Button>
           </form>
           <div className="flex gap-2 text-sm mt-5">
@@ -97,9 +122,14 @@ export default function SignIn() {
               Sign Up
             </Link>
           </div>
+          {errorMessage && (
+            <Alert className="mt-5" color="failure">
+              {errorMessage}
+            </Alert>
+          )}
         </div>
       </div>
-      <Toaster />
+      {/* <Toaster /> */}
     </div>
   );
 }
