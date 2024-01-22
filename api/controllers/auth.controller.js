@@ -107,3 +107,68 @@ export const signin = async (req, res, next) => {
     return next(error);
   }
 };
+
+export const google = async (req, res, next) => {
+  const { email, name, googlePhotoUrl } = req.body;
+
+  try {
+    const getUserSql = "SELECT * FROM users WHERE email = ?";
+    db.query(getUserSql, [email], async (getUserErr, userData) => {
+      if (getUserErr) {
+        return next(errorHandler(500, "Error checking existing user"));
+      }
+
+      if (!userData.length) {
+        const generatedPassword =
+          Math.random().toString(36).slice(-8) +
+          Math.random().toString(36).slice(-8);
+        const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+        const newUser = {
+          username:
+            name.toLowerCase().split(" ").join("") +
+            Math.random().toString(9).slice(-4),
+          email,
+          password: hashedPassword,
+          profilePicture: googlePhotoUrl,
+        };
+
+        const insertUserSql = "INSERT INTO users SET ?";
+        db.query(insertUserSql, newUser, (insertUserErr, insertUserData) => {
+          if (insertUserErr) {
+            return next(errorHandler(500, "Error inserting new user"));
+          }
+
+          const token = jwt.sign(
+            {
+              id: insertUserData.insertId,
+              username: newUser.username,
+              email: newUser.email,
+            },
+            process.env.JWT_SECRET,
+            {
+              expiresIn: "1d",
+            }
+          );
+
+          delete newUser.password;
+          newUser.success = true;
+
+          return res
+            .status(200)
+            .cookie("access_token", token, {
+              httpOnly: true,
+            })
+            .json(newUser);
+        });
+      } else {
+        // User already exists
+        return res
+          .status(200)
+          .json({ success: true, message: "User already exists" });
+      }
+    });
+  } catch (error) {
+    console.error("Error in Google authentication:", error);
+    next(errorHandler(500, "Internal server error"));
+  }
+};

@@ -1,17 +1,16 @@
 import { useState } from "react";
 import { Alert, Button, Label, Spinner, TextInput } from "flowbite-react";
 import { Link, useNavigate } from "react-router-dom";
-// import toast, { Toaster } from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
 import {
   singInStart,
   signInSuccess,
   signInFailure,
 } from "../redux/user/userSlice";
+import OAuth from "../components/OAuth";
 
 export default function SignIn() {
   const [formData, setFormData] = useState({});
-  // const [loading, setLoading] = useState(false);
   const { loading, error: errorMessage } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -24,12 +23,10 @@ export default function SignIn() {
     e.preventDefault();
 
     if (!formData.email || !formData.password) {
-      // return toast.error("Please fill all the fields");
       return dispatch(signInFailure("Please fill all the fields"));
     }
 
     try {
-      // setLoading(true);
       dispatch(singInStart());
       const res = await fetch("/api/auth/sign-in", {
         method: "POST",
@@ -39,7 +36,6 @@ export default function SignIn() {
       const data = await res.json();
 
       if (data.success === false) {
-        // toast.error(data.message);
         dispatch(signInFailure(data.message));
       } else if (data.success === true) {
         if (res.ok) {
@@ -48,17 +44,6 @@ export default function SignIn() {
         }
       }
     } catch (error) {
-      // if (
-      //   error.response &&
-      //   error.response.data &&
-      //   error.response.data.message
-      // ) {
-      //   toast.error(`Server error: ${error.response.data.message}`);
-      // } else if (error.request) {
-      //   toast.error("No response from server");
-      // } else {
-      //   toast.error("Something went wrong");
-      // }
       dispatch(signInFailure(error.message));
     }
   };
@@ -79,8 +64,8 @@ export default function SignIn() {
             your email and password or with Google.
           </p>
         </div>
-        {/* right */}
 
+        {/* right */}
         <div className="flex-1">
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
             <div>
@@ -115,6 +100,7 @@ export default function SignIn() {
                 "Sign In"
               )}
             </Button>
+            <OAuth />
           </form>
           <div className="flex gap-2 text-sm mt-5">
             <span>Don&apos;t have an account?</span>
@@ -129,7 +115,6 @@ export default function SignIn() {
           )}
         </div>
       </div>
-      {/* <Toaster /> */}
     </div>
   );
 }
