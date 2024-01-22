@@ -13,7 +13,7 @@ export const signup = async (req, res, next) => {
     email === "" ||
     password === ""
   ) {
-    next(errorHandler(400, "All fields are required"));
+    return next(errorHandler(400, "All fields are required"));
   }
 
   const newUser = {
@@ -26,15 +26,15 @@ export const signup = async (req, res, next) => {
     // Check if the user already exists
     const sql = "SELECT * FROM users WHERE username = ? OR email = ?";
 
-    db.query(sql, [username, email], (err, data) => {
+    db.query(sql, [username, email], async (err, data) => {
       if (err) {
-        next(errorHandler(500, "Internal server error"));
+        return next(errorHandler(500, "Internal server error"));
       }
       if (data.length)
-        next(errorHandler(400, "Username or email already exists"));
+        return next(errorHandler(400, "Username or email already exists"));
 
       // Hash the password
-      const hashedPassword = bcrypt.hash(newUser.password, 10);
+      const hashedPassword = await bcrypt.hash(newUser.password, 10);
       newUser.password = hashedPassword;
 
       // Insert the user into the database
@@ -42,12 +42,12 @@ export const signup = async (req, res, next) => {
 
       db.query(sql, newUser, (err, data) => {
         if (err) {
-          next(errorHandler(500, "Internal server error"));
+          return next(errorHandler(500, "Internal server error"));
         }
-        res.status(201).json({ message: "User created successfully" });
+        return res.status(201).json({ message: "User created successfully" });
       });
     });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
