@@ -94,6 +94,8 @@ export const signin = async (req, res, next) => {
 
       delete data[0].password;
 
+      data[0].success = true;
+
       return res
         .status(200)
         .cookie("access_token", token, {
