@@ -83,8 +83,7 @@ export const signin = async (req, res, next) => {
       const token = jwt.sign(
         {
           id: data[0].id,
-          username: data[0].username,
-          email: data[0].email,
+          isAdmin: data[0].isAdmin,
         },
         process.env.JWT_SECRET,
         {
@@ -141,8 +140,7 @@ export const google = async (req, res, next) => {
           const token = jwt.sign(
             {
               id: insertUserData.insertId,
-              username: newUser.username,
-              email: newUser.email,
+              isAdmin: insertUserData.isAdmin,
             },
             process.env.JWT_SECRET,
             {
@@ -169,8 +167,7 @@ export const google = async (req, res, next) => {
         const token = jwt.sign(
           {
             id: userData.insertId,
-            username: userData.username,
-            email: userData.email,
+            isAdmin: userData.isAdmin,
           },
           process.env.JWT_SECRET,
           {
