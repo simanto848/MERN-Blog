@@ -201,3 +201,25 @@ export const updateUser = async (req, res, next) => {
     next(errorHandler(400, error.message));
   }
 };
+
+export const deleteUser = (req, res, next) => {
+  const userId = req.params.userId;
+
+  if (req.user.id != userId) {
+    return next(errorHandler(403, "You are not allowed to delete the user"));
+  }
+
+  try {
+    const sql = `DELETE FROM users WHERE id = ?`;
+
+    db.query(sql, [userId], (err, data) => {
+      if (err) {
+        return next(errorHandler(500, "Internal server error"));
+      }
+
+      res.status(200).json({ success: true, message: "User has been deleted" });
+    });
+  } catch (error) {
+    next(errorHandler(400, error.message));
+  }
+};
