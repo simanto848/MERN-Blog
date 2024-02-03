@@ -44,7 +44,7 @@ export default function Header() {
         >
           {theme === "light" ? <FaMoon /> : <FaSun />}
         </Button>
-        <Link to="/sign-in">
+        <Link>
           {currentUser ? (
             <Dropdown
               arrowIcon={false}
