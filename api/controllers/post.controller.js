@@ -40,3 +40,21 @@ export const create = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getPosts = async (req, res, next) => {
+  try {
+    const userId = req.query.userId;
+    const category = req.query.category;
+    const slug = req.query.slug;
+    const title = req.query.title;
+    const sql = `SELECT * FROM posts WHERE userId = ? OR category = ? OR slug = ? OR title = ? ORDER BY updated_at DESC LIMIT 9`;
+    db.query(sql, [userId, category, slug, title], (err, data) => {
+      if (err) {
+        return next(errorHandler(500, err.message));
+      }
+      res.status(200).json(data);
+    });
+  } catch (error) {
+    next(error);
+  }
+};
