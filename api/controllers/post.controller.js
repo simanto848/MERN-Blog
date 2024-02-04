@@ -66,3 +66,33 @@ export const getPosts = async (req, res, next) => {
     next(error);
   }
 };
+
+export const deletePost = async (req, res, next) => {
+  if (!req.user.isAdmin || req.user.id != req.params.userId) {
+    return next(errorHandler(403, "You are not allowed to delete this post"));
+  }
+
+  try {
+    // Check if the post exists
+    const sql = `SELECT * FROM posts WHERE id = ?`;
+    db.query(sql, [req.params.postId], (err, data) => {
+      if (err) {
+        return next(errorHandler(500, err.message));
+      }
+      if (data.length === 0) {
+        return next(errorHandler(404, "Post not found"));
+      }
+
+      // Delete the post
+      const sql = `DELETE FROM posts WHERE id = ?`;
+      db.query(sql, [req.params.postId], (err, data) => {
+        if (err) {
+          return next(errorHandler(500, err.message));
+        }
+        res.status(200).json({ message: "Post deleted successfully" });
+      });
+    });
+  } catch (error) {
+    next(error);
+  }
+};
