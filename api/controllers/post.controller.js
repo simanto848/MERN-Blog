@@ -27,7 +27,14 @@ export const create = async (req, res, next) => {
       if (err) {
         return next(errorHandler(500, err.message));
       }
-      res.status(201).json({ message: "Post created successfully" });
+
+      const sql = `SELECT * FROM posts WHERE title = ? LIMIT 1`;
+      db.query(sql, [title], (err, data) => {
+        if (err) {
+          return next(errorHandler(500, err.message));
+        }
+        res.status(201).json(data[0]);
+      });
     });
   } catch (error) {
     next(error);
