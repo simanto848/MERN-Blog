@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 export default function DashPosts() {
   const currentUser = useSelector((state) => state.user);
   const [userPosts, setUserPosts] = useState([]);
-  console.log("User Post", userPosts);
+  const [showMore, setShowMore] = useState(true);
 
   useEffect(() => {
     if (!currentUser.currentUser.isAdmin) {
@@ -20,6 +20,9 @@ export default function DashPosts() {
         const data = await res.json();
         if (res.ok) {
           setUserPosts(data);
+          if (data.length < 9) {
+            setShowMore(false);
+          }
         }
       } catch (error) {
         console.log(error.message);
@@ -29,6 +32,31 @@ export default function DashPosts() {
       fetchPosts();
     }
   }, [currentUser.currentUser.id]);
+
+  const handleShowMore = async () => {
+    const startIndex = userPosts.length;
+    try {
+      const res = await fetch(
+        `/api/post/getposts?userId=${currentUser.currentUser.id}&startIndex=${startIndex}`
+      );
+      const data = await res.json();
+      if (res.ok) {
+        setUserPosts((prev) => {
+          if (Array.isArray(data) && data.length > 0) {
+            return [...prev, ...data];
+          } else {
+            console.error("Data structure is not as expected:", data);
+            return prev;
+          }
+        });
+        if (Array.isArray(data) && data.length < 9) {
+          setShowMore(false);
+        }
+      }
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
 
   return (
     <div className="table-auto overflow-x-scroll md:mx-auto p-3 scrollbar scrollbar-track-slate-100 scrollbar-thumb-slate-300 dark:scrollbar-track-slate-700 dark:scrollbar-track-slate-500">
@@ -86,6 +114,14 @@ export default function DashPosts() {
               </Table.Body>
             ))}
           </Table>
+          {showMore && (
+            <button
+              onClick={handleShowMore}
+              className="w-full text-teal-500 self-center text-sm py-7"
+            >
+              Show more
+            </button>
+          )}
         </>
       ) : (
         <p>You have no post yet!</p>

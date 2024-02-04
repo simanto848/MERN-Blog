@@ -15,8 +15,10 @@ export const create = async (req, res, next) => {
     .join("-")
     .toLowerCase()
     .replace(/[^a-zA-Z0-9-]/g, "");
+  const id = new Date().getTime();
   const newPost = {
     ...req.body,
+    id,
     slug,
     userId: req.user.id,
   };
@@ -47,13 +49,19 @@ export const getPosts = async (req, res, next) => {
     const category = req.query.category;
     const slug = req.query.slug;
     const title = req.query.title;
-    const sql = `SELECT * FROM posts WHERE userId = ? OR category = ? OR slug = ? OR title = ? ORDER BY updated_at DESC LIMIT 9`;
-    db.query(sql, [userId, category, slug, title], (err, data) => {
-      if (err) {
-        return next(errorHandler(500, err.message));
+    const startIndex = parseInt(req.query.startIndex) || 0;
+    const limit = parseInt(req.query.limit) || 9;
+    const sql = `SELECT * FROM posts WHERE userId = ? OR category = ? OR slug = ? OR title = ? ORDER BY updated_at DESC LIMIT ?, ?`;
+    db.query(
+      sql,
+      [userId, category, slug, title, startIndex, limit],
+      (err, data) => {
+        if (err) {
+          return next(errorHandler(500, err.message));
+        }
+        res.status(200).json(data);
       }
-      res.status(200).json(data);
-    });
+    );
   } catch (error) {
     next(error);
   }
