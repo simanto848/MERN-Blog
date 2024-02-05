@@ -234,3 +234,51 @@ export const signout = (req, res, next) => {
     next(errorHandler(400, error.message));
   }
 };
+
+export const getUsers = async (req, res, next) => {
+  try {
+    if (!req.user.isAdmin) {
+      return next(errorHandler(403, "You are not allowed to view all users"));
+    }
+
+    const startIndex = parseInt(req.query.startIndex) || 0;
+    const limit = parseInt(req.query.limit) || 9;
+
+    const getUsersSQL =
+      "SELECT id, username, email, created_at, updated_at FROM users LIMIT ?, ?";
+    const getTotalUsersSQL = "SELECT COUNT(*) AS totalUsers FROM users";
+
+    const [users, totalUsersResult] = await Promise.all([
+      new Promise((resolve, reject) => {
+        db.query(getUsersSQL, [startIndex, limit], (err, data) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(data);
+          }
+        });
+      }),
+      new Promise((resolve, reject) => {
+        db.query(getTotalUsersSQL, (err, data) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(data[0].totalUsers);
+          }
+        });
+      }),
+    ]);
+
+    const usersWithoutPassword = users.map((user) => {
+      const { id, username, email, created_at, updated_at } = user;
+      return { id, username, email, created_at, updated_at };
+    });
+
+    res.status(200).json({
+      totalUsers: totalUsersResult,
+      users: usersWithoutPassword,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
