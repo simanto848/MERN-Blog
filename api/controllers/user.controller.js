@@ -245,7 +245,7 @@ export const getUsers = async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 9;
 
     const getUsersSQL =
-      "SELECT id, username, email, created_at, updated_at FROM users LIMIT ?, ?";
+      "SELECT id, username, email, profilePicture, isAdmin, created_at, updated_at FROM users LIMIT ?, ?";
     const getTotalUsersSQL = "SELECT COUNT(*) AS totalUsers FROM users";
 
     const [users, totalUsersResult] = await Promise.all([
@@ -270,8 +270,24 @@ export const getUsers = async (req, res, next) => {
     ]);
 
     const usersWithoutPassword = users.map((user) => {
-      const { id, username, email, created_at, updated_at } = user;
-      return { id, username, email, created_at, updated_at };
+      const {
+        id,
+        username,
+        email,
+        profilePicture,
+        isAdmin,
+        created_at,
+        updated_at,
+      } = user;
+      return {
+        id,
+        username,
+        email,
+        profilePicture,
+        isAdmin,
+        created_at,
+        updated_at,
+      };
     });
 
     res.status(200).json({
