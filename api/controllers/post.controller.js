@@ -46,15 +46,16 @@ export const create = async (req, res, next) => {
 export const getPosts = async (req, res, next) => {
   try {
     const userId = req.query.userId;
+    const postId = req.query.postId;
     const category = req.query.category;
     const slug = req.query.slug;
     const title = req.query.title;
     const startIndex = parseInt(req.query.startIndex) || 0;
     const limit = parseInt(req.query.limit) || 9;
-    const sql = `SELECT * FROM posts WHERE userId = ? OR category = ? OR slug = ? OR title = ? ORDER BY updated_at DESC LIMIT ?, ?`;
+    const sql = `SELECT * FROM posts WHERE userId = ? OR id = ? OR category = ? OR slug = ? OR title = ? ORDER BY updated_at DESC LIMIT ?, ?`;
     db.query(
       sql,
-      [userId, category, slug, title, startIndex, limit],
+      [userId, postId, category, slug, title, startIndex, limit],
       (err, data) => {
         if (err) {
           return next(errorHandler(500, err.message));
@@ -92,6 +93,37 @@ export const deletePost = async (req, res, next) => {
         res.status(200).json({ message: "Post deleted successfully" });
       });
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updatePost = async (req, res, next) => {
+  if (!req.user.isAdmin || req.user.id != req.params.userId) {
+    return next(errorHandler(403, "You are not allowed to update this post"));
+  }
+  try {
+    const postId = req.params.postId;
+    const title = req.body.title;
+    const content = req.body.content;
+    const category = req.body.category;
+    const image = req.body.image;
+
+    const sql = ` UPDATE posts SET title = ?, content = ?, category = ?, image = ? WHERE id = ? `;
+    const updateResult = db.query(sql, [
+      title,
+      content,
+      category,
+      image,
+      postId,
+    ]);
+
+    if (updateResult.affectedRows === 0) {
+      return next(errorHandler(404, "Post not found"));
+    }
+    const updatedPost = db.query("SELECT * FROM posts WHERE id = ?", [postId]);
+
+    res.status(200).json(updatedPost[0]);
   } catch (error) {
     next(error);
   }
