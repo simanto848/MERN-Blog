@@ -298,3 +298,27 @@ export const getUsers = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getUser = async (req, res, next) => {
+  try {
+    const userId = req.params.userId;
+
+    const sql = `SELECT * FROM users WHERE id = ?`;
+    db.query(sql, [userId], (err, data) => {
+      if (err) {
+        return next(errorHandler(500, "Internal server error"));
+      }
+
+      if (data.length === 0) {
+        return next(errorHandler(404, "User not found"));
+      }
+
+      const user = data[0];
+      const { password, ...userWithoutPassword } = user;
+
+      res.status(200).json(userWithoutPassword);
+    });
+  } catch (error) {
+    next(error);
+  }
+};

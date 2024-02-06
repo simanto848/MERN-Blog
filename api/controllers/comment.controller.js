@@ -39,3 +39,18 @@ export const createComment = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getPostComments = async (req, res, next) => {
+  try {
+    const postId = req.params.postId;
+    const sql = `SELECT * FROM comment WHERE postId = ? ORDER BY created_at DESC`;
+    db.query(sql, postId, (err, result) => {
+      if (err) {
+        return next(errorHandler(500, "Internal Server Error"));
+      }
+      res.status(200).json({ comments: result });
+    });
+  } catch (error) {
+    next(error);
+  }
+};
